@@ -1,0 +1,125 @@
+---
+title: "Codebook"
+author: "Dat Huynh"
+date: "2023-09-24"
+output: html_document
+---
+
+#**Getting and Cleaning Data - Week 4 - Project**
+
+##*Working Directory and Files*
+
+The two packages, *dplyr* and *utils* should be installed and loaded before setting working directory and downloading data
+
+```{r, echo=FALSE}
+#Install and load dplyr package
+#install.packages("dplyr")
+library("dplyr")
+#Install and load dplyr package
+#install.packages("utils")
+library("utils")
+
+```
+
+As my computer has **C** as hard drive name, I would like to start the directory as C, then download the data set before unzip the file. The final directory is then directed to the data set
+
+This is the [link](https://d396qusza40orc.cloudfront.net/getdata%2Fprojectfiles%2FUCI%20HAR%20Dataset.zip) to download the data for the project:
+
+```{r}
+
+#Create folder "Course Project" in C drive
+setwd("C:/")
+foldername<-"Course Project"
+if(!file.exists(foldername)){
+  dir.create(foldername)
+}
+
+#Redirect to folder "Course Project
+setwd(paste("C:/",foldername,sep = ""))
+fileurl<-"https://d396qusza40orc.cloudfront.net/getdata%2Fprojectfiles%2FUCI%20HAR%20Dataset.zip"
+
+#Download the data zip file
+filename<-"Coursera_Week4_CourseProject"
+if(!file.exists(filename)){
+  download.file(fileurl,filename,method="curl")
+}
+
+#unzip the data file
+if(!file.exists("UCI HAR Dataset")){
+  unzip(filename)
+  }
+
+#Redirect to folder with data files
+setwd("./UCI HAR Dataset")
+getwd()
+```
+
+##*Merges the training and the test sets to create one data set*
+
+List of Variables:
+
+1. Activity <- store table "activity_labels, which is used to decode y_train, y_test. Solve the problem 3: Uses descriptive activity names to name the activities in the data set
+2. Features <- store table "features", which is used to name columns of X_train
+3. subject_train <- store the subject_train in train folder
+4. X_train <- store the X_train in train folder
+5. y_train <- store the y_train in train folder
+6. subject_test <- store the subject_test in test folder
+7. X_test <- store the X_test in test folder
+8. y_test <- store the y_test in train folder
+9. Subject <- Merger of subject_train and subject_test
+10. Y <- Merger of y_train and y_test
+11. X <- Merger of X_train and X_test
+
+```{r}
+
+#Assign variables
+Activity <- read.table("C:/Course Project/UCI HAR Dataset/activity_labels.txt")
+names(Activity)<-c("Code","Activity")
+
+Features <- read.table("C:/Course Project/UCI HAR Dataset/features.txt")
+names(Features)<-c("N","Function")
+
+subject_train <- read.table("C:/Course Project/UCI HAR Dataset/train/subject_train.txt",col.names = "Subject_No")
+y_train <- read.table("C:/Course Project/UCI HAR Dataset/train/y_train.txt", col.names = "Code")
+X_train <- read.table("C:/Course Project/UCI HAR Dataset/train/X_train.txt",col.names = Features$Function)
+subject_test<- read.table("C:/Course Project/UCI HAR Dataset/test/subject_test.txt",col.names = "Subject_No")
+y_test <- read.table("C:/Course Project/UCI HAR Dataset/test/y_test.txt", col.names = "Code")
+X_test <- read.table("C:/Course Project/UCI HAR Dataset/test/X_test.txt",col.names = Features$Function)
+Subject <- rbind(subject_train,subject_test)
+Y <- rbind(y_train,y_test)
+X <- rbind(X_train,X_test)
+Master_Data <-cbind(Subject,Y,X)
+#Uses descriptive activity names to name the activities in the data set
+Master_Data$Code<-Activity[Master_Data$Code,]$Activity
+```
+
+##*Extracts only the measurements on the mean and standard deviation for each measurement*
+```{r}
+names(Master_Data)[2]<-"Activity"
+Extract_Data<-Master_Data %>% select(Subject_No, Activity,contains("mean"),contains("std"))
+```
+
+##*Appropriately labels the data set with descriptive variable names*
+```{r}
+names(Extract_Data)<-gsub("^t","Time-",names(Extract_Data))
+names(Extract_Data)<-gsub("[Bb]ody[Bb]ody|[Bb]ody","Body-",names(Extract_Data))
+names(Extract_Data)<-gsub("^f","Frequency-",names(Extract_Data))
+names(Extract_Data)<-gsub("^angle.t","Angle-",names(Extract_Data))
+names(Extract_Data)<-gsub("Acc","Accelerometer-",names(Extract_Data))
+names(Extract_Data)<-gsub("\\.","",names(Extract_Data))
+names(Extract_Data)<-gsub("Gyro","Gyroscope-",names(Extract_Data))
+names(Extract_Data)<-gsub("Jerk","Jerk-",names(Extract_Data))
+names(Extract_Data)<-gsub("[Mm]ag","Magnitude-",names(Extract_Data))
+names(Extract_Data)<-gsub("[Mm]ean","Mean-",names(Extract_Data))
+names(Extract_Data)<-gsub("-$","",names(Extract_Data))
+```
+##*From the data set in step 4, creates a second, independent tidy data set with the average of each variable for each activity and each subject*
+```{r}
+
+Tidy_Data <- Extract_Data %>% group_by(Activity,Subject_No) %>% summarise_all(funs(mean))
+
+#write the Tidy_Data in csv file
+if(!file.exists("Tidy_Data.csv")){write.csv(Tidy_Data,"Tidy_Data.csv", row.names = FALSE)}
+
+```
+
