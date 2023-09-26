@@ -5,14 +5,6 @@ Course Project submission
 
 The two packages, dplyr and utils should be installed and loaded before setting working directory and downloading data
 
-## 
-## Attaching package: 'dplyr'
-## The following objects are masked from 'package:stats':
-## 
-##     filter, lag
-## The following objects are masked from 'package:base':
-## 
-##     intersect, setdiff, setequal, union
 As my computer has C as hard drive name, I would like to start the directory as C, then download the data set before unzip the file. The final directory is then directed to the data set
 
 This is the link to download the data for the project:
